@@ -53,7 +53,7 @@ esac
 
 case $3 in
     "x"|"-")
-    header="$(( (RANDOM%1000) + $(cat $file | wc -c) / 2 ))"
+    header=$(bc<<<"ibase=A;obase=A;$(tr -cd '0-9'</dev/urandom|head -c3200)%$(wc -c<$file)"|tr -d '\\\n')
     ;;
     *)
     header="$3"
@@ -72,14 +72,15 @@ esac
 
 case $5 in
 	""|"1"|"x"|"-")
-	[ ! -z "$6" ]&&{ echo -n '0x';echo "ibase=A;obase=G;$header"|bc;}
+	dd if=$infile of=dat.tmp bs=1 count=$num status=none >/dev/null
+	[ ! -z "$6" ]&&{ echo -n '0x';echo "ibase=A;obase=G;$header"|bc|tr -d '\\n';echo -n '=';xxd -u -p<dat.tmp|tr -d '\n';echo -n ' ';}
 	dd if=$infile of=$file bs=1 seek=$header conv=notrunc count=$num status=none
 	;;
 	*)
 	for i in $(seq $5);do
-		header=$(bc<<<"ibase=A;obase=A;$(tr -cd '0-9'</dev/urandom|head -c3200)%$(wc -c<$file)")
+		header=$(bc<<<"ibase=A;obase=A;$(tr -cd '0-9'</dev/urandom|head -c3200)%$(wc -c<$file)"|tr -d '\\\n')
 		dd if=$infile of=dat.tmp bs=1 count=$num status=none >/dev/null
-		[ ! -z "$6" ]&&{ echo -n '0x';echo "ibase=A;obase=G;$header"|bc|tr '\n' '=';xxd -u -p<dat.tmp|tr '\n' ' ';}
+		[ ! -z "$6" ]&&{ echo -n '0x';echo "ibase=A;obase=G;$header"|bc|tr -d '\\\n';echo -n '=';xxd -u -p<dat.tmp|tr -d '\n';echo -n ' ';}
 		dd if=dat.tmp of=$file bs=1 seek=$header conv=notrunc count=$num status=none
 	done
 	;;
