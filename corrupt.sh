@@ -77,9 +77,10 @@ case $5 in
 	;;
 	*)
 	for i in $(seq $5);do
-		[ ! -z "$6" ]&&{ echo -n '0x';echo "ibase=A;obase=G;$header"|bc|tr '\n' ' ';}
-		header="$(( RANDOM%$(cat $file|wc -c) ))"
-		dd if=$infile of=$file bs=1 seek=$header conv=notrunc count=$num status=none
+		header=$(bc<<<"ibase=A;obase=A;$(tr -cd '0-9'</dev/urandom|head -c3200)%$(wc -c<$file)")
+		dd if=$infile of=dat.tmp bs=1 count=$num status=none >/dev/null
+		[ ! -z "$6" ]&&{ echo -n '0x';echo "ibase=A;obase=G;$header"|bc|tr '\n' '=';xxd -u -p<dat.tmp|tr '\n' ' ';}
+		dd if=dat.tmp of=$file bs=1 seek=$header conv=notrunc count=$num status=none
 	done
 	;;
 esac
