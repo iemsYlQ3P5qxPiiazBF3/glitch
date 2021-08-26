@@ -5,7 +5,9 @@
 #$3 - start of corruption
 #$4 - file to corrupt with
 #$5 - loop of corruptions. (takes only beginning)
+#$6 - debug
 #if $2/$3/$4 'x', will be random
+
 
 case $1 in
     "-h"|"--help")
@@ -70,10 +72,12 @@ esac
 
 case $5 in
 	""|"1"|"x"|"-")
+	[ ! -z "$6" ]&&{ echo -n '0x';echo "ibase=A;obase=G;$header"|bc;}
 	dd if=$infile of=$file bs=1 seek=$header conv=notrunc count=$num status=none
 	;;
 	*)
 	for i in $(seq $5);do
+		[ ! -z "$6" ]&&{ echo -n '0x';echo "ibase=A;obase=G;$header"|bc|tr '\n' ' ';}
 		header="$(( RANDOM%$(cat $file|wc -c) ))"
 		dd if=$infile of=$file bs=1 seek=$header conv=notrunc count=$num status=none
 	done
